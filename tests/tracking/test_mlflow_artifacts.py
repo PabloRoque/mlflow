@@ -228,6 +228,21 @@ def test_list_artifacts(artifacts_server, tmp_path):
     assert artifacts == ["dir/b.txt"]
 
 
+def test_list_and_download_a_directory_holding_a_file_named_like_it(artifacts_server, tmp_path):
+    url = artifacts_server.url
+    mlflow.set_tracking_uri(url)
+
+    tmp_path.joinpath("0").write_text("data")
+    client = MlflowClient()
+    with mlflow.start_run() as run:
+        mlflow.log_artifact(tmp_path.joinpath("0"), "0")
+
+    assert [a.path for a in client.list_artifacts(run.info.run_id, "0")] == ["0/0"]
+    assert client.list_artifacts(run.info.run_id, "0/0") == []
+    dest_path = download_artifacts(run_id=run.info.run_id, artifact_path="0")
+    assert read_file(os.path.join(dest_path, "0")) == "data"
+
+
 def test_download_artifacts(artifacts_server, tmp_path):
     url = artifacts_server.url
     mlflow.set_tracking_uri(url)

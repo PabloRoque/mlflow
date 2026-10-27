@@ -451,33 +451,20 @@ def test_list_artifacts(http_artifact_repo):
         with pytest.raises(Exception, match="request failed"):
             http_artifact_repo.list_artifacts()
 
-    # Tests below test listing a single file, note that the list_artifacts API should
-    # return an empty list if the the path references a single file.
+    # A directory holding a single file named like the directory lists that file.
+    # Listing a single file returns an empty list, which the server already does.
     with mock.patch(
         "mlflow.store.artifact.http_artifact_repo.http_request",
         return_value=MockResponse(
             {
                 "files": [
-                    {"path": "1.txt", "is_dir": False, "file_size": 1},
+                    {"path": "0", "is_dir": False, "file_size": 1},
                 ]
             },
             200,
         ),
     ):
-        assert [a.path for a in http_artifact_repo.list_artifacts(path="1.txt")] == []
-
-    with mock.patch(
-        "mlflow.store.artifact.http_artifact_repo.http_request",
-        return_value=MockResponse(
-            {
-                "files": [
-                    {"path": "1.txt", "is_dir": False, "file_size": 1},
-                ]
-            },
-            200,
-        ),
-    ):
-        assert [a.path for a in http_artifact_repo.list_artifacts(path="path/1.txt/1.txt")] == []
+        assert [a.path for a in http_artifact_repo.list_artifacts(path="0")] == ["0/0"]
 
 
 @pytest.mark.parametrize("path", ["/tmp/path", "../../path", "%2E%2E%2Fpath"])
